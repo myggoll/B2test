@@ -122,6 +122,17 @@ bool HelloWorld::init()
 
 	this->schedule(schedule_selector(HelloWorld::tick));
 
+
+	auto listener = EventListenerTouchOneByOne::create();
+	listener->setSwallowTouches(true);
+	listener->onTouchBegan = CC_CALLBACK_2(HelloWorld::onTouchBegan, this);
+	listener->onTouchMoved = CC_CALLBACK_2(HelloWorld::onTouchMoved, this);
+	listener->onTouchEnded = CC_CALLBACK_2(HelloWorld::onTouchEnded, this);
+	listener->onTouchCancelled = CC_CALLBACK_2(HelloWorld::onTouchCancelled, this);
+
+	EventDispatcher* dispatcher = Director::getInstance()->getEventDispatcher();
+	dispatcher->addEventListenerWithSceneGraphPriority(listener, this);
+
     return true;
 }
 
@@ -142,7 +153,9 @@ void HelloWorld::menuCloseCallback(Ref* pSender)
 
 void HelloWorld::menuResetCallback( cocos2d::Ref* pSender )
 {
+	//Reset My box
 
+	m_bCreateMine = true;
 }
 
 void HelloWorld::draw( Renderer *renderer, const Mat4& transform, uint32_t flags )
@@ -156,5 +169,68 @@ void HelloWorld::draw( Renderer *renderer, const Mat4& transform, uint32_t flags
 
 void HelloWorld::tick( float dt )
 {
+	if( fixture_mine && fixture_mine->GetBody() )
+	{
+		b2Body *b = fixture_mine->GetBody();
+		Sprite *sprite = (Sprite *)b->GetUserData();
+		sprite->setPosition(Vec2(b->GetPosition().x * PTM_RATIO,
+			b->GetPosition().y * PTM_RATIO));
+		sprite->setRotation(-1 * CC_RADIANS_TO_DEGREES(b->GetAngle()));
+	}
+}
 
+bool HelloWorld::onTouchBegan( Touch *pTouch, Event *pEvent )
+{
+	Vec2 touchPos = this->convertTouchToNodeSpace(pTouch);
+	//log("Touch Began %.2f, %.2f", touchPos.x, touchPos.y);
+
+	if( m_bCreateMine )
+	{
+		pSprite_mine = Sprite::create("Icon.png");
+		pSprite_mine ->setPosition(touchPos);
+		pSprite_mine->setTag(tag_mine);
+		this->addChild(pSprite_mine);
+
+		b2BodyDef block_body_def;
+		block_body_def.type = b2_staticBody;
+		block_body_def.position.Set(pSprite_mine->getPositionX()/PTM_RATIO,
+			pSprite_mine->getPositionY()/PTM_RATIO);
+		block_body_def.userData = pSprite_mine;
+
+		b2Body *block_body = world_->CreateBody(&block_body_def);
+
+		b2PolygonShape block_polygon;
+		block_polygon.SetAsBox(pSprite_mine->getContentSize().width/PTM_RATIO/2,
+			pSprite_mine->getContentSize().height/PTM_RATIO/2);
+		b2FixtureDef block_fixture_def;
+		block_fixture_def.shape = &block_polygon;
+
+		fixture_mine = block_body->CreateFixture(&block_fixture_def);
+
+		m_bCreateMine = false;
+	}
+
+	if( pSprite_mine->getBoundingBox().containsPoint(touchPos) )
+	{
+		m_bMoving = true;
+	}
+
+	return true;
+}
+
+void HelloWorld::onTouchMoved( Touch *pTouch, Event *pEvent )
+{
+	Vec2 touchPos = this->convertTouchToNodeSpace(pTouch);
+	//log("Touch Moved %.2f, %.2f", touchPos.x, touchPos.y);
+
+	if( m_bMoving && fixture_mine )
+	{
+		fixture_mine->GetBody()->SetTransform( b2Vec2(touchPos.x/PTM_RATIO, touchPos.y/PTM_RATIO), fixture_collisionBox->GetBody()->GetAngle());
+	}
+}
+
+void HelloWorld::onTouchEnded( Touch *pTouch, Event *pEvent )
+{
+	log("Touch Ended");
+	m_bMoving = false;
 }

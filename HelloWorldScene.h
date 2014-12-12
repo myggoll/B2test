@@ -61,6 +61,10 @@ public:
 
 	HelloWorld()
 		: m_debugDraw(PTM_RATIO)
+		, m_bCreateMine(true)
+		, m_bMoving(false)
+		, fixture_mine(nullptr)
+		, fixture_collisionBox(nullptr)
 	{
 
 	}
@@ -84,6 +88,15 @@ private:
 
 	Sprite* pSprite_mine;
 	Sprite* pSprite_collisionBox;
+
+	bool m_bCreateMine;
+	bool m_bMoving;
+
+protected:
+	virtual bool onTouchBegan(Touch *pTouch, Event *pEvent);
+	virtual void onTouchMoved(Touch *pTouch, Event *pEvent);
+	virtual void onTouchEnded(Touch *pTouch, Event *pEvent);
+	virtual void onTouchCancelled(Touch *pTouch, Event *pEvent){}
 };
 
 #endif // __HELLOWORLD_SCENE_H__
