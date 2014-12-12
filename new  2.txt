@@ -1,0 +1,48 @@
+Sprite *block = Sprite::create("Icon.png");
+			block->setPosition(Vec2(500 + (30 * col) + (15 * (5 - blocks)), row * 30 + 15));
+			block->setTag(kTagBlock);
+			this->addChild(block);
+
+			b2BodyDef block_body_def;
+			block_body_def.type = b2_dynamicBody;
+			block_body_def.position.Set(block->getPositionX()/PTM_RATIO,
+			block->getPositionY()/PTM_RATIO);
+			block_body_def.userData = block;
+
+			b2Body *block_body = world_->CreateBody(&block_body_def);
+
+			b2PolygonShape block_polygon;
+			block_polygon.SetAsBox(block->getContentSize().width/PTM_RATIO/2,
+			block->getContentSize().height/PTM_RATIO/2);
+			b2FixtureDef block_fixture_def;
+			block_fixture_def.shape = &block_polygon;
+			block_fixture_def.density = 1.0f;
+			block_fixture_def.friction = 1.0f;
+			block_fixture_def.restitution = 0.4f;
+
+			block_body->CreateFixture(&block_fixture_def);
+			
+			
+			
+				b2CircleShape shape;
+			shape.m_radius = 1.0f;
+
+			for (int32 i = 0; i < e_count; ++i)
+			{
+				b2BodyDef bd;
+				bd.type = b2_dynamicBody;
+				bd.position.Set(-10.0f + 3.0f * i, 20.0f);
+				bd.userData = m_touching + i;
+
+				m_touching[i] = false;
+				m_bodies[i] = m_world->CreateBody(&bd);
+
+				m_bodies[i]->CreateFixture(&shape, 1.0f);
+			}
+			
+			
+			
+			
+			
+			
+			
